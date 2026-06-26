@@ -18,8 +18,14 @@
 
 ## 実行例で得られる出力
 
-`examples/harmonic.py` は調和振動子を、`examples/anharmonic.py` は非調和振動子を計算し、結果を `outputs/` 以下に保存する。
+`examples/harmonic.py` は調和振動子を、`examples/anharmonic.py` は非調和振動子を、`examples/double_well.py` は二重井戸ポテンシャルを計算し、結果を `outputs/` 以下に保存する。
 出力先はパラメータごとに分かれるため、複数の設定を試しても結果が混ざらない。
+
+各 example では、可能な範囲で次の 3 種類を比較する。
+
+1. 解析解または解析的に分かる量
+2. 非 Parisi-Wu の数値計算（有限差分対角化）
+3. Parisi-Wu 確率過程量子化による数値計算
 
 代表的な出力は次の通り。
 
@@ -32,4 +38,5 @@
 ```bash
 python examples/harmonic.py
 python examples/anharmonic.py
+python examples/double_well.py
 ```

@@ -69,12 +69,14 @@ sqm-ground-state/
 │   ├── __init__.py
 │   ├── langevin.py       # ランジュバン方程式ソルバー
 │   ├── action.py         # ユークリッド作用とポテンシャル定義
+│   ├── analytic.py       # 解析解・解析的に分かる量
 │   ├── observables.py    # 物理量の測定
 │   ├── analysis.py       # 統計解析（誤差推定など）
 │   ├── exact.py          # 有限差分対角化による検証
 │   └── runner.py         # example 用の出力・summary 保存ヘルパー
 ├── tests/
 │   ├── test_action.py
+│   ├── test_analytic.py
 │   ├── test_analysis.py
 │   ├── test_exact.py
 │   ├── test_langevin.py
@@ -82,7 +84,8 @@ sqm-ground-state/
 │   └── test_runner.py
 ├── examples/
 │   ├── harmonic.py       # 調和振動子の実行例
-│   └── anharmonic.py     # 非調和振動子の実行例
+│   ├── anharmonic.py     # 非調和振動子の実行例
+│   └── double_well.py    # 二重井戸ポテンシャルの実行例
 ├── outputs/              # 実験出力（Git 管理外）
 └── requirements.txt
 ```
@@ -107,6 +110,6 @@ sqm-ground-state/
 
 ## 実装の優先順位
 
-1. **Phase 1**: 調和振動子で基本フレームワークを構築・検証
-2. **Phase 2**: 非調和振動子に拡張
-3. **Phase 3**: 二重井戸ポテンシャルに対応
+1. **Phase 1**: 調和振動子で基本フレームワークを構築・検証（実装済み）
+2. **Phase 2**: 非調和振動子に拡張（実装済み）
+3. **Phase 3**: 二重井戸ポテンシャルに対応（実装済み）
