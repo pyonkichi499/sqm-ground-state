@@ -26,8 +26,8 @@ def main():
         n_lattice=100,
         a=0.1,
         epsilon=0.003,   # 二重井戸では小さめにする
-        n_therm=9000,
-        n_configs=5000,
+        n_therm=12000,
+        n_configs=8000,
         n_skip=25,
         rng_seed=321,
         # 二重井戸では今回のパラメータだと比較的短い tau でプラトーが見える。
