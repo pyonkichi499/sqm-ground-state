@@ -199,6 +199,125 @@ def _format(value, spec="{:.6f}"):
     return spec.format(value)
 
 
+# プロットの日本語ラベル用フォント。OS にインストール済みであることを前提とする。
+# インストール手順は README.md の「日本語フォント」を参照。
+PLOT_FONT_FAMILY = "Noto Sans CJK JP"
+
+# fontconfig 上の登録名の揺れを吸収するための別名（rcParams には解決後の 1 名だけ渡す）。
+_PLOT_FONT_ALIASES = (
+    PLOT_FONT_FAMILY,
+    "Noto Sans CJK",
+)
+
+_resolved_plot_font = None
+
+
+class PlotFontNotFoundError(RuntimeError):
+    """日本語プロット用フォントが OS に見つからない。"""
+
+
+def _plot_font_not_found_message():
+    return (
+        f"日本語プロット用フォント '{PLOT_FONT_FAMILY}' が見つかりません。\n"
+        "README.md の「日本語フォント」を参照して OS にインストールしてください。\n"
+        "例 (Debian/Ubuntu/WSL):\n"
+        "  sudo apt install fonts-noto-cjk\n"
+        "  fc-cache -fv"
+    )
+
+
+def _register_plot_font_from_system(fm):
+    """OS に fonts-noto-cjk があるが matplotlib 未登録の場合に addfont する。"""
+    for path in fm.findSystemFonts():
+        if path.endswith("NotoSansCJK-Regular.ttc"):
+            fm.fontManager.addfont(path)
+            return path
+    return None
+
+
+def _lookup_plot_font(fm):
+    """登録済みフォント名から Noto Sans CJK JP を探す。"""
+    for name in _PLOT_FONT_ALIASES:
+        try:
+            fm.findfont(fm.FontProperties(family=name), fallback_to_default=False)
+            return name
+        except ValueError:
+            continue
+    return None
+
+
+def _resolve_plot_font():
+    """日本語プロット用フォントを 1 回だけ解決する。
+
+    戻り値
+    ------
+    str
+        matplotlib に渡す font family 名。
+    """
+    from matplotlib import font_manager as fm
+
+    resolved = _lookup_plot_font(fm)
+    if resolved is not None:
+        return resolved
+
+    # apt で fonts-noto-cjk を入れても、matplotlib の font cache に未登録のことがある。
+    if _register_plot_font_from_system(fm) is not None:
+        resolved = _lookup_plot_font(fm)
+        if resolved is not None:
+            return resolved
+
+    raise PlotFontNotFoundError(_plot_font_not_found_message())
+
+
+def _configure_plot_fonts(plt):
+    """matplotlib の描画フォントを設定する。
+
+    日本語ラベル表示のため ``PLOT_FONT_FAMILY`` を前提とする。
+    未インストールの場合は :class:`PlotFontNotFoundError` を送出する。
+    """
+    global _resolved_plot_font
+    if _resolved_plot_font is None:
+        _resolved_plot_font = _resolve_plot_font()
+
+    plt.rcParams["font.family"] = _resolved_plot_font
+    plt.rcParams["font.sans-serif"] = [_resolved_plot_font]
+    plt.rcParams["axes.unicode_minus"] = False
+
+
+def _configure_plot_style(plt):
+    """白基調のプロットスタイルを設定する。
+
+    seaborn が利用できる場合は ``whitegrid`` を使う。利用できない場合でも、
+    matplotlib 側の白基調スタイルへフォールバックする。
+
+    戻り値
+    ------
+    str
+        実際に適用したスタイル名。
+    """
+    _configure_plot_fonts(plt)
+
+    try:
+        import seaborn as sns
+
+        sns.set_theme(
+            style="whitegrid",
+            context="notebook",
+            palette="deep",
+        )
+        _configure_plot_fonts(plt)
+        return "seaborn-whitegrid"
+    except ImportError:
+        try:
+            plt.style.use("seaborn-v0_8-whitegrid")
+            style_name = "matplotlib-seaborn-v0_8-whitegrid"
+        except OSError:
+            plt.style.use("default")
+            style_name = "matplotlib-default"
+        _configure_plot_fonts(plt)
+        return style_name
+
+
 def _print_header(config, output_dir):
     _log(config, "=" * 60)
     _log(config, f"  確率過程量子化 -- {config.title or config.potential.name}")
@@ -247,6 +366,12 @@ def _make_plots(config, output_dir, analytic, fd, pw):
         import matplotlib.pyplot as plt
     except ImportError:
         _log(config, "\n  [matplotlib が利用できないため、プロットをスキップします]")
+        return {}
+
+    try:
+        _configure_plot_style(plt)
+    except PlotFontNotFoundError as exc:
+        _log(config, f"\n  [プロットをスキップします: {exc}]")
         return {}
 
     import os

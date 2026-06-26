@@ -7,7 +7,15 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 import numpy as np
 import pytest
 
-from src.experiment import ExperimentConfig, run_experiment
+from src.experiment import (
+    PLOT_FONT_FAMILY,
+    ExperimentConfig,
+    PlotFontNotFoundError,
+    _configure_plot_fonts,
+    _configure_plot_style,
+    _resolve_plot_font,
+    run_experiment,
+)
 from src.potentials import double_well, harmonic
 
 
@@ -97,3 +105,74 @@ def test_experiment_config_rejects_invalid_values(overrides, error_type):
 
     with pytest.raises(error_type):
         ExperimentConfig(**params)
+
+
+def test_plot_font_family_is_noto_sans_cjk_jp():
+    """プロット用フォントは Noto Sans CJK JP に決め打ちする。"""
+    assert PLOT_FONT_FAMILY == "Noto Sans CJK JP"
+
+
+def test_resolve_plot_font_registers_system_font_when_needed():
+    """OS に fonts-noto-cjk がある場合、matplotlib 未登録でも解決できる。"""
+    import src.experiment as experiment
+
+    experiment._resolved_plot_font = None
+    resolved = _resolve_plot_font()
+    assert resolved in experiment._PLOT_FONT_ALIASES
+
+
+def test_resolve_plot_font_raises_when_missing(monkeypatch):
+    """日本語フォントが無い環境では PlotFontNotFoundError を出す。"""
+    import src.experiment as experiment
+
+    monkeypatch.setattr(experiment, "_lookup_plot_font", lambda _fm: None)
+    monkeypatch.setattr(experiment, "_register_plot_font_from_system", lambda _fm: None)
+
+    with pytest.raises(PlotFontNotFoundError, match=PLOT_FONT_FAMILY):
+        _resolve_plot_font()
+
+
+def test_configure_plot_fonts_sets_single_resolved_font(monkeypatch):
+    """rcParams には解決済みフォント名を 1 つだけ設定する。"""
+    import matplotlib.pyplot as plt
+
+    import src.experiment as experiment
+
+    monkeypatch.setattr(experiment, "_resolved_plot_font", "Noto Sans CJK JP")
+
+    _configure_plot_fonts(plt)
+
+    family = plt.rcParams["font.family"]
+    if isinstance(family, list):
+        family = family[0]
+    assert family == "Noto Sans CJK JP"
+    assert plt.rcParams["font.sans-serif"] == ["Noto Sans CJK JP"]
+    assert plt.rcParams["axes.unicode_minus"] is False
+
+
+def test_configure_plot_style_uses_whitegrid():
+    """seaborn が利用できる環境では whitegrid スタイルを使う。"""
+    import matplotlib.pyplot as plt
+
+    import src.experiment as experiment
+
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(experiment, "_resolved_plot_font", "Noto Sans CJK JP")
+    try:
+        style_name = _configure_plot_style(plt)
+
+        assert style_name in {
+            "seaborn-whitegrid",
+            "matplotlib-seaborn-v0_8-whitegrid",
+            "matplotlib-default",
+        }
+        family = plt.rcParams["font.family"]
+        if isinstance(family, list):
+            family = family[0]
+        assert family == "Noto Sans CJK JP"
+        assert plt.rcParams["axes.unicode_minus"] is False
+        if style_name != "matplotlib-default":
+            assert plt.rcParams["axes.grid"] is True
+    finally:
+        monkeypatch.undo()
+
