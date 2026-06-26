@@ -16,7 +16,6 @@
 
 import os
 import sys
-import json
 
 import numpy as np
 
@@ -25,75 +24,11 @@ import numpy as np
 # ---------------------------------------------------------------------------
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from src.action import harmonic_force, harmonic_potential
+from src.action import harmonic_force
 from src.langevin import LangevinSimulation
-from src.observables import correlator, effective_mass, position_histogram, mean_x_squared
+from src.observables import correlator, effective_mass, position_histogram
 from src.analysis import jackknife
-
-
-def format_param_value(value):
-    """出力ディレクトリ名に使いやすい形へパラメータ値を変換する。
-
-    小数点はファイル名で扱いやすいように p に置き換える。
-    例: 0.01 -> 0p01, 1.0 -> 1p0
-    """
-    if isinstance(value, float):
-        return f"{value:g}".replace(".", "p").replace("-", "m")
-    return str(value).replace(".", "p").replace("-", "m")
-
-
-def make_run_name(system_name, params):
-    """物理系の名前とパラメータから、実行結果用のディレクトリ名を作る。
-
-    命名規則:
-
-        <物理系名>_<key1>_<value1>_<key2>_<value2>_...
-
-    params は挿入順を保つ辞書として扱う。重要なパラメータから順に並べることで、
-    ディレクトリ一覧を見たときに比較しやすくする。
-    """
-    parts = [system_name]
-    for key, value in params.items():
-        parts.append(f"{key}_{format_param_value(value)}")
-    return "_".join(parts)
-
-
-def make_output_dir(system_name, params):
-    """リポジトリ直下の outputs/ に、物理系別・パラメータ別の出力先を作る。
-
-    例:
-
-        outputs/harmonic/harmonic_omega_1p0_N_100_a_0p1_eps_0p01/
-
-    outputs/ は .gitignore で無視されるため、多数のパラメータを試しても
-    Git の管理対象には入らない。
-    """
-    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    run_name = make_run_name(system_name, params)
-    output_dir = os.path.join(repo_root, "outputs", system_name, run_name)
-    os.makedirs(output_dir, exist_ok=True)
-    return output_dir
-
-
-def to_builtin(value):
-    """JSON に保存できる Python 標準型へ変換する。"""
-    if isinstance(value, np.generic):
-        return value.item()
-    if isinstance(value, np.ndarray):
-        return value.tolist()
-    return value
-
-
-def save_summary(output_dir, params, results):
-    """実行パラメータと主要な測定結果を summary.json に保存する。"""
-    summary = {
-        "parameters": {key: to_builtin(value) for key, value in params.items()},
-        "results": {key: to_builtin(value) for key, value in results.items()},
-    }
-    summary_path = os.path.join(output_dir, "summary.json")
-    with open(summary_path, "w", encoding="utf-8") as f:
-        json.dump(summary, f, ensure_ascii=False, indent=2)
-    return summary_path
+from src.runner import make_output_dir, save_summary
 
 
 def main():
