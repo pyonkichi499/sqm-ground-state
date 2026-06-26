@@ -1,3 +1,6 @@
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# example や実験スクリプトが生成する出力
+outputs/
