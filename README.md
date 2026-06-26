@@ -28,6 +28,37 @@
 `src/action.py` と `src/analytic.py` は従来の関数 API を保つ後方互換レイヤーで、
 内部的には `src/potentials.py` と `src/lattice.py` に委譲する。
 
+## プロットの見た目
+
+プロット（`effective_mass.png` / `wavefunction.png`）は `seaborn` の `whitegrid` を優先して使い、白基調のグリッド付きスタイルで出力する。`seaborn` が使えない場合は matplotlib 側の白基調スタイルへフォールバックする。
+
+## 日本語フォント
+
+プロットのタイトル・凡例は**日本語**で出力する。
+そのため **`Noto Sans CJK JP` が OS にインストール済みであること**を前提とする。
+Python パッケージ（`requirements.txt`）には含まれない。
+
+### インストール例
+
+Debian / Ubuntu / WSL:
+
+```bash
+sudo apt install fonts-noto-cjk
+fc-cache -fv
+```
+
+macOS では Noto Sans CJK がシステムに同梱されていることが多い。Font Book で
+「Noto Sans CJK JP」の有無を確認する。
+
+### フォントがない場合
+
+`examples/*.py` 実行時、数値計算と `summary.json` の保存は行われるが、
+プロット生成はスキップされ、README への案内メッセージが表示される。
+
+使用フォント名は `src/experiment.py` の `PLOT_FONT_FAMILY` で定義している。
+matplotlib の font cache に未登録でも、OS に fonts-noto-cjk があれば
+実行時に自動登録を試みる。
+
 ## 実行例で得られる出力
 
 `examples/harmonic.py` は調和振動子を、`examples/anharmonic.py` は非調和振動子を、`examples/double_well.py` は二重井戸ポテンシャルを計算し、結果を `outputs/` 以下に保存する。
