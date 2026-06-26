@@ -24,8 +24,10 @@ import numpy as np
 # ---------------------------------------------------------------------------
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from src.action import harmonic_force
+from src.action import harmonic_force, harmonic_potential
+from src.analytic import harmonic_analytic_results, harmonic_wavefunction_density
 from src.langevin import LangevinSimulation
+from src.exact import solve_spectrum
 from src.observables import correlator, effective_mass, position_histogram
 from src.analysis import jackknife
 from src.runner import make_output_dir, save_summary
@@ -46,6 +48,11 @@ def main():
     rng_seed = 42        # 再現性のための乱数シード
     max_tau = n_lattice // 2
 
+    # 有限差分対角化のパラメータ
+    x_min = -8.0
+    x_max = 8.0
+    n_grid = 350
+
     output_params = {
         "omega": omega,
         "mass": mass,
@@ -58,6 +65,7 @@ def main():
         "seed": rng_seed,
     }
     output_dir = make_output_dir("harmonic", output_params)
+    analytic = harmonic_analytic_results(omega=omega, mass=mass)
 
     print("=" * 60)
     print("  確率過程量子化 -- 調和振動子")
@@ -73,7 +81,35 @@ def main():
     print("=" * 60)
 
     # ------------------------------------------------------------------
-    # 2. ランジュバンシミュレーションを実行
+    # 2. 解析解と有限差分対角化による比較用の数値解
+    # ------------------------------------------------------------------
+    print("\n解析解:")
+    print(f"  E0       = {analytic['E0']:.6f}")
+    print(f"  E1 - E0  = {analytic['gap']:.6f}")
+    print(f"  <x^2>    = {analytic['x2']:.6f}")
+
+    print("\n有限差分対角化で比較用のスペクトルを計算中 ...")
+    exact_energies, x_grid, exact_wavefunctions = solve_spectrum(
+        harmonic_potential,
+        x_min=x_min,
+        x_max=x_max,
+        n_grid=n_grid,
+        mass=mass,
+        n_levels=2,
+        omega=omega,
+    )
+    exact_E0 = exact_energies[0]
+    exact_gap = exact_energies[1] - exact_energies[0]
+    exact_psi0 = exact_wavefunctions[:, 0]
+    dx = x_grid[1] - x_grid[0]
+    exact_x2 = np.sum((x_grid**2) * np.abs(exact_psi0) ** 2) * dx
+
+    print(f"  E0（有限差分）      = {exact_E0:.6f}")
+    print(f"  E1 - E0（有限差分） = {exact_gap:.6f}")
+    print(f"  <x^2>（有限差分）   = {exact_x2:.6f}")
+
+    # ------------------------------------------------------------------
+    # 3. ランジュバンシミュレーションを実行
     # ------------------------------------------------------------------
     print("\nランジュバンシミュレーションを実行中 ...")
     sim = LangevinSimulation(
@@ -89,21 +125,22 @@ def main():
     print(f"  {configs.shape[1]} 個の格子点上で {configs.shape[0]} 個の配位を生成しました。")
 
     # ------------------------------------------------------------------
-    # 3a. 物理量: <x^2> とジャックナイフ誤差
+    # 4a. 物理量: <x^2> とジャックナイフ誤差
     # ------------------------------------------------------------------
     # 各配位ごとの <x^2>（各配位内で格子点平均を取る）
     x2_per_config = np.mean(configs ** 2, axis=1)
 
     x2_est, x2_err = jackknife(x2_per_config, func=np.mean)
-    x2_exact = 1.0 / (2.0 * omega)
 
     print("\n--- <x^2> ---")
-    print(f"  測定値: {x2_est:.6f} +/- {x2_err:.6f}")
-    print(f"  厳密解: {x2_exact:.6f}")
-    print(f"  ずれ:   {abs(x2_est - x2_exact) / x2_err:.1f} sigma")
+    print(f"  解析解:         {analytic['x2']:.6f}")
+    print(f"  有限差分対角化: {exact_x2:.6f}")
+    print(f"  Parisi-Wu:      {x2_est:.6f} +/- {x2_err:.6f}")
+    if x2_err > 0:
+        print(f"  Parisi-Wu と解析解のずれ: {abs(x2_est - analytic['x2']) / x2_err:.1f} sigma")
 
     # ------------------------------------------------------------------
-    # 3b. 相関関数と有効質量
+    # 4b. 相関関数と有効質量
     # ------------------------------------------------------------------
     corr = correlator(configs, max_tau=max_tau)
     m_eff = effective_mass(corr, a=a)
@@ -118,7 +155,7 @@ def main():
             print(f"  {t * a:5.1f}  {corr[t]:12.6f}  {meff_str:>12s}")
 
     # ------------------------------------------------------------------
-    # 3c. 有効質量のプラトーから基底状態エネルギーを確認
+    # 4c. 有効質量のプラトーからエネルギーギャップを確認
     # ------------------------------------------------------------------
     # 有効質量 m_eff(tau) は大きな tau で E_1 - E_0 = omega に近づく。
     # 小さい tau と大きすぎる tau を避け、プラトー領域で平均する。
@@ -129,16 +166,16 @@ def main():
 
     if len(plateau_vals) > 0:
         delta_E = np.mean(plateau_vals)
-        # 基底状態エネルギーは E_0 = omega/2。
-        # ここでは E_1 - E_0 = omega（エネルギーギャップ）を確認している。
-        E0_exact = omega / 2.0
-        print("\n--- 基底状態エネルギー ---")
-        print(f"  E_1 - E_0（プラトー平均, tau/a in [{plateau_start},{plateau_end})): "
-              f"{delta_E:.4f}  （厳密解: {omega:.4f}）")
-        print(f"  => E_0 = omega/2 = {E0_exact:.4f}")
+        print("\n--- エネルギーギャップ E1 - E0 ---")
+        print(f"  解析解:         {analytic['gap']:.6f}")
+        print(f"  有限差分対角化: {exact_gap:.6f}")
+        print(f"  Parisi-Wu:      {delta_E:.6f}")
+        print("\n--- 基底状態エネルギー E0 ---")
+        print(f"  解析解:         {analytic['E0']:.6f}")
+        print(f"  有限差分対角化: {exact_E0:.6f}")
+        print("  Parisi-Wu:      この相関関数からは直接は測定していない")
     else:
         delta_E = np.nan
-        E0_exact = omega / 2.0
         print("\n  [警告] 安定した有効質量のプラトーを抽出できませんでした。")
 
     summary_path = save_summary(
@@ -147,12 +184,18 @@ def main():
         {
             "x2_measured": x2_est,
             "x2_error": x2_err,
-            "x2_exact": x2_exact,
+            "x2_analytic": analytic["x2"],
+            "x2_exact_diagonalization": exact_x2,
             "effective_mass_plateau": delta_E,
-            "energy_gap_exact": omega,
-            "E0_exact": E0_exact,
+            "energy_gap_analytic": analytic["gap"],
+            "energy_gap_exact_diagonalization": exact_gap,
+            "E0_analytic": analytic["E0"],
+            "E0_exact_diagonalization": exact_E0,
             "plateau_start": plateau_start,
             "plateau_end": plateau_end,
+            "exact_x_min": x_min,
+            "exact_x_max": x_max,
+            "exact_n_grid": n_grid,
         },
     )
     print(f"\n  実行条件と主要結果を保存しました -> {summary_path}")
@@ -171,7 +214,10 @@ def main():
 
         fig, ax = plt.subplots(figsize=(7, 4.5))
         ax.plot(tau_vals[valid], m_eff[valid], "o-", markersize=3, label=r"$m_{\rm eff}(\tau)$")
-        ax.axhline(omega, color="red", linestyle="--", linewidth=1.5, label=rf"$\omega = {omega}$")
+        ax.axhline(analytic["gap"], color="red", linestyle="--", linewidth=1.5,
+                   label=rf"$E_1-E_0={analytic['gap']:.3f}$（解析解）")
+        ax.axhline(exact_gap, color="purple", linestyle=":", linewidth=1.5,
+                   label=rf"$E_1-E_0={exact_gap:.3f}$（有限差分）")
         ax.set_xlabel(r"$\tau$")
         ax.set_ylabel(r"$m_{\rm eff}(\tau)$")
         ax.set_title("ユークリッド相関関数から求めた有効質量")
@@ -188,13 +234,16 @@ def main():
         # ---- 波動関数ヒストグラム vs 厳密な |psi_0|^2 ----
         bin_centers, hist_vals = position_histogram(configs, n_bins=60)
         x_fine = np.linspace(bin_centers[0], bin_centers[-1], 300)
-        psi2_exact = np.sqrt(omega / np.pi) * np.exp(-omega * x_fine ** 2)
+        psi2_analytic = harmonic_wavefunction_density(x_fine, omega=omega, mass=mass)
+        psi2_exact = np.abs(exact_psi0) ** 2
 
         fig, ax = plt.subplots(figsize=(7, 4.5))
         ax.bar(bin_centers, hist_vals, width=(bin_centers[1] - bin_centers[0]),
                alpha=0.6, label="シミュレーションのヒストグラム")
-        ax.plot(x_fine, psi2_exact, "r-", linewidth=2,
-                label=r"$|\psi_0(x)|^2$（厳密解）")
+        ax.plot(x_fine, psi2_analytic, "r-", linewidth=2,
+                label=r"$|\psi_0(x)|^2$（解析解）")
+        ax.plot(x_grid, psi2_exact, color="purple", linestyle=":", linewidth=2,
+                label=r"$|\psi_0(x)|^2$（有限差分）")
         ax.set_xlabel(r"$x$")
         ax.set_ylabel(r"$|\psi_0(x)|^2$")
         ax.set_title("基底状態の波動関数")

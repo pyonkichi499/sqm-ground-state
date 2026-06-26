@@ -24,6 +24,7 @@ import numpy as np
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from src.action import anharmonic_force, anharmonic_potential
+from src.analytic import anharmonic_analytic_results
 from src.analysis import jackknife
 from src.exact import solve_spectrum
 from src.langevin import LangevinSimulation
@@ -65,6 +66,7 @@ def main():
         "seed": rng_seed,
     }
     output_dir = make_output_dir("anharmonic", output_params)
+    analytic = anharmonic_analytic_results()
 
     print("=" * 60)
     print("  確率過程量子化 -- 非調和振動子")
@@ -81,8 +83,16 @@ def main():
     print("=" * 60)
 
     # ------------------------------------------------------------------
-    # 2. 有限差分対角化による比較用の数値解
+    # 2. 解析解と有限差分対角化による比較用の数値解
     # ------------------------------------------------------------------
+    print("\n解析解:")
+    if analytic["available"]:
+        print(f"  E0      = {analytic['E0']:.6f}")
+        print(f"  E1 - E0 = {analytic['gap']:.6f}")
+        print(f"  <x^2>   = {analytic['x2']:.6f}")
+    else:
+        print(f"  なし（{analytic['reason']}）")
+
     print("\n有限差分対角化で比較用のスペクトルを計算中 ...")
     exact_energies, x_grid, exact_wavefunctions = solve_spectrum(
         anharmonic_potential,
@@ -128,10 +138,11 @@ def main():
     x2_est, x2_err = jackknife(x2_per_config, func=np.mean)
 
     print("\n--- <x^2> ---")
-    print(f"  測定値:         {x2_est:.6f} +/- {x2_err:.6f}")
+    print("  解析解:         なし")
     print(f"  有限差分対角化: {exact_x2:.6f}")
+    print(f"  Parisi-Wu:      {x2_est:.6f} +/- {x2_err:.6f}")
     if x2_err > 0:
-        print(f"  ずれ:           {abs(x2_est - exact_x2) / x2_err:.1f} sigma")
+        print(f"  Parisi-Wu と有限差分のずれ: {abs(x2_est - exact_x2) / x2_err:.1f} sigma")
 
     # ------------------------------------------------------------------
     # 4b. 相関関数と有効質量
@@ -155,8 +166,13 @@ def main():
     if len(plateau_vals) > 0:
         delta_E = np.mean(plateau_vals)
         print("\n--- エネルギーギャップ ---")
-        print(f"  E1 - E0（プラトー平均） = {delta_E:.6f}")
-        print(f"  E1 - E0（有限差分）     = {exact_gap:.6f}")
+        print("  解析解:         なし")
+        print(f"  有限差分対角化: {exact_gap:.6f}")
+        print(f"  Parisi-Wu:      {delta_E:.6f}")
+        print("\n--- 基底状態エネルギー E0 ---")
+        print("  解析解:         なし")
+        print(f"  有限差分対角化: {exact_E0:.6f}")
+        print("  Parisi-Wu:      この相関関数からは直接は測定していない")
     else:
         delta_E = np.nan
         print("\n  [警告] 安定した有効質量のプラトーを抽出できませんでした。")
@@ -167,9 +183,13 @@ def main():
         {
             "x2_measured": x2_est,
             "x2_error": x2_err,
+            "x2_analytic": None,
+            "analytic_reason": analytic["reason"],
             "x2_exact_diagonalization": exact_x2,
             "effective_mass_plateau": delta_E,
+            "energy_gap_analytic": None,
             "energy_gap_exact_diagonalization": exact_gap,
+            "E0_analytic": None,
             "E0_exact_diagonalization": exact_E0,
             "plateau_start": plateau_start,
             "plateau_end": plateau_end,
