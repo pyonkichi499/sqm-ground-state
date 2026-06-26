@@ -1,4 +1,4 @@
-"""Tests for the LangevinSimulation class in src/langevin.py."""
+"""src/langevin.py の LangevinSimulation クラスに対するテスト。"""
 
 import os
 import sys
@@ -11,10 +11,10 @@ from src.langevin import LangevinSimulation
 from src.action import harmonic_force
 
 
-# -- Shared helpers ----------------------------------------------------------
+# -- 共通ヘルパー ------------------------------------------------------------
 
 def make_sim(**overrides):
-    """Create a LangevinSimulation with sensible defaults for testing."""
+    """テスト用の妥当なデフォルト値で LangevinSimulation を作成する。"""
     defaults = dict(
         n_lattice=20,
         a=0.1,
@@ -28,7 +28,7 @@ def make_sim(**overrides):
     return LangevinSimulation(**defaults)
 
 
-# -- 1. Initialization -------------------------------------------------------
+# -- 1. 初期化 ---------------------------------------------------------------
 
 class TestInitialization:
     def test_x_is_zeros(self):
@@ -47,7 +47,7 @@ class TestInitialization:
         assert sim.epsilon == 0.05
 
 
-# -- 2. Reproducibility ------------------------------------------------------
+# -- 2. 再現性 ---------------------------------------------------------------
 
 class TestReproducibility:
     def test_same_seed_gives_same_path(self):
@@ -71,23 +71,23 @@ class TestReproducibility:
         assert not np.allclose(sim1.x, sim2.x)
 
 
-# -- 3. Step modifies the path -----------------------------------------------
+# -- 3. 1 ステップで経路が変更されること -------------------------------------------
 
 class TestStep:
     def test_step_changes_path(self):
         sim = make_sim()
         assert np.all(sim.x == 0.0)
         sim.step()
-        assert not np.all(sim.x == 0.0), "Path should change after a Langevin step"
+        assert not np.all(sim.x == 0.0), "ランジュバンステップ後は経路が変化するはず"
 
     def test_step_updates_all_sites(self):
         sim = make_sim(n_lattice=16)
         sim.step()
-        # Every site receives independent noise, so all should be nonzero.
+        # 各格子点には独立なノイズが加わるため、すべて非ゼロになるはず。
         assert np.count_nonzero(sim.x) == 16
 
 
-# -- 4. generate_configurations shape ----------------------------------------
+# -- 4. 生成される配位配列の形状 ------------------------------------
 
 class TestGenerateConfigurations:
     def test_shape(self):
@@ -100,12 +100,12 @@ class TestGenerateConfigurations:
         sim = make_sim(n_lattice=10)
         sim.thermalize(200)
         configs = sim.generate_configurations(n_configs=5, n_skip=10)
-        # Successive saved configurations should not be identical.
+        # 連続して保存された配位は同一ではないはず。
         for i in range(len(configs) - 1):
             assert not np.array_equal(configs[i], configs[i + 1])
 
 
-# -- 5. run returns correct shape --------------------------------------------
+# -- 5. run が正しい 形状 を返すこと ---------------------------------------
 
 class TestRun:
     def test_shape(self):
@@ -115,8 +115,7 @@ class TestRun:
         assert configs.shape == (n_configs, n_lattice)
 
     def test_run_equivalent_to_thermalize_then_generate(self):
-        """run() should produce the same result as calling thermalize + generate
-        with the same seed."""
+        """同じシードなら、run() は熱化後に配位生成した場合と同じ結果を返すはず。"""
         seed = 77
         sim1 = make_sim(rng_seed=seed, n_lattice=16)
         configs1 = sim1.run(n_therm=100, n_configs=8, n_skip=5)
@@ -128,14 +127,14 @@ class TestRun:
         np.testing.assert_array_equal(configs1, configs2)
 
 
-# -- 6. Physics: harmonic oscillator <x^2> -----------------------------------
+# -- 6. 物理: 調和振動子の <x^2> -------------------------------------------
 
 class TestPhysics:
     def test_harmonic_x_squared_expectation(self):
-        """For a harmonic oscillator with omega=1, mass=1 the exact ground-
-        state expectation value is <x^2> = 1/(2*omega) = 0.5.
+        """omega=1, mass=1 の調和振動子では、厳密な基底状態期待値は
+        <x^2> = 1/(2*omega) = 0.5 である。
 
-        We verify the lattice simulation reproduces this within 20% tolerance.
+        格子シミュレーションがこの値を 20% の相対誤差以内で再現することを確認する。
         """
         sim = LangevinSimulation(
             n_lattice=100,
@@ -148,10 +147,10 @@ class TestPhysics:
         )
         configs = sim.run(n_therm=5000, n_configs=2000, n_skip=20)
 
-        # <x^2> averaged over all sites and all configurations
+        # すべての格子点・すべての配位で平均した <x^2>
         x_sq_mean = np.mean(configs ** 2)
         expected = 0.5  # 1 / (2 * omega)
 
         assert x_sq_mean == pytest.approx(expected, rel=0.20), (
-            f"<x^2> = {x_sq_mean:.4f}, expected ~{expected} within 20%"
+            f"<x^2> = {x_sq_mean:.4f}, 期待値 ~{expected} から 20% 以内に入るはず"
         )

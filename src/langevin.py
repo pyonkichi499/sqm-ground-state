@@ -1,11 +1,12 @@
-"""Langevin equation solver for stochastic quantization (Parisi-Wu method).
+"""確率過程量子化（Parisi-Wu 法）のためのランジュバン方程式ソルバー。
 
-Implements Euler-Maruyama integration of the Langevin equation on a
-discretized Euclidean time lattice with periodic boundary conditions:
+周期境界条件を持つ離散化ユークリッド時間格子上で、次のランジュバン方程式を
+オイラー・丸山法で積分する:
 
     x_j(t + eps) = x_j(t) + eps * f_j + sqrt(2 * eps) * eta_j
 
-where f_j = -dS_E/dx_j is the drift force and eta_j ~ N(0, 1).
+ここで f_j = -dS_E/dx_j はドリフト力、eta_j は標準正規分布 N(0, 1) に従う
+ノイズである。
 """
 
 import numpy as np
@@ -14,25 +15,24 @@ from src.action import drift_force
 
 
 class LangevinSimulation:
-    """Langevin dynamics simulation on a Euclidean time lattice.
+    """ユークリッド時間格子上のランジュバン力学シミュレーション。
 
-    Parameters
-    ----------
+    引数
+    ----
     n_lattice : int
-        Number of lattice sites (Euclidean time discretization).
+        格子点数（ユークリッド時間方向の離散化数）。
     a : float
-        Lattice spacing.
+        格子間隔。
     mass : float
-        Particle mass.
-    force_func : callable
-        Derivative of the potential dV/dx, passed through to drift_force.
+        粒子の質量。
+    force_func : 呼び出し可能
+        ポテンシャルの導関数 dV/dx。drift_force に渡される。
     epsilon : float
-        Langevin step size (fictitious-time discretization).
-    rng_seed : int, optional
-        Seed for the random number generator (for reproducibility).
+        ランジュバンステップ幅（架空の確率時間の刻み幅）。
+    rng_seed : int, 省略可
+        乱数生成器のシード（再現性のため）。
     **pot_params
-        Additional keyword arguments forwarded to drift_force
-        (e.g. omega, lam).
+        drift_force に渡す追加のキーワード引数（例: omega, lam）。
     """
 
     def __init__(self, n_lattice, a, mass, force_func, epsilon,
@@ -48,32 +48,32 @@ class LangevinSimulation:
         self.x = np.zeros(n_lattice)
 
     def step(self):
-        """Perform one Euler-Maruyama Langevin step on all lattice sites."""
+        """全格子点に対してオイラー・丸山法によるランジュバンステップを 1 回進める。"""
         force = drift_force(self.x, self.force_func,
                             mass=self.mass, a=self.a, **self.pot_params)
         noise = self.rng.standard_normal(self.n_lattice)
         self.x = self.x + self.epsilon * force + np.sqrt(2.0 * self.epsilon) * noise
 
     def thermalize(self, n_therm):
-        """Run *n_therm* Langevin steps to reach thermal equilibrium."""
+        """熱平衡に近づけるため、n_therm 回のランジュバンステップを実行する。"""
         for _ in range(n_therm):
             self.step()
 
     def generate_configurations(self, n_configs, n_skip=10):
-        """Collect lattice configurations separated by *n_skip* steps.
+        """n_skip ステップ間隔で格子配位を収集する。
 
-        Parameters
-        ----------
+        引数
+        ----
         n_configs : int
-            Number of configurations to collect.
+            収集する配位数。
         n_skip : int
-            Number of Langevin steps between successive samples
-            (to reduce autocorrelation).
+            連続するサンプルの間に進めるランジュバンステップ数
+            （自己相関を減らすため）。
 
-        Returns
-        -------
-        configs : np.ndarray, shape (n_configs, n_lattice)
-            Array of sampled path configurations.
+        戻り値
+        ------
+        configs : np.ndarray, 形状 (n_configs, n_lattice)
+            サンプリングされた経路配位の配列。
         """
         configs = np.empty((n_configs, self.n_lattice))
         for i in range(n_configs):
@@ -83,24 +83,23 @@ class LangevinSimulation:
         return configs
 
     def run(self, n_therm, n_configs, n_skip=10):
-        """Thermalize and then generate configurations.
+        """熱化を行った後、配位を生成する。
 
-        Convenience wrapper that calls :meth:`thermalize` followed by
-        :meth:`generate_configurations`.
+        thermalize を呼んだ後に generate_configurations を呼ぶための便利メソッド。
 
-        Parameters
-        ----------
+        引数
+        ----
         n_therm : int
-            Number of thermalization steps.
+            熱化ステップ数。
         n_configs : int
-            Number of configurations to collect.
+            収集する配位数。
         n_skip : int
-            Steps skipped between measurements.
+            測定間にスキップするステップ数。
 
-        Returns
-        -------
-        configs : np.ndarray, shape (n_configs, n_lattice)
-            Sampled path configurations after thermalization.
+        戻り値
+        ------
+        configs : np.ndarray, 形状 (n_configs, n_lattice)
+            熱化後にサンプリングされた経路配位。
         """
         self.thermalize(n_therm)
         return self.generate_configurations(n_configs, n_skip)

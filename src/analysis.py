@@ -1,34 +1,33 @@
 """
-Statistical analysis tools for Monte Carlo / Langevin simulation data.
+モンテカルロ法 / ランジュバンシミュレーションデータの統計解析ツール。
 
-Provides jackknife resampling, binning analysis, autocorrelation
-functions, and integrated autocorrelation time estimation -- the
-standard toolkit for extracting reliable error bars from correlated
-time-series produced by stochastic quantization simulations.
+ジャックナイフ再標本化、ビニング解析、自己相関関数、積分自己相関時間の
+推定を提供する。これらは、確率過程量子化シミュレーションで生成される
+相関を持った時系列から信頼できる誤差を見積もるための標準的な道具である。
 """
 
 import numpy as np
 
 
 # ---------------------------------------------------------------------------
-# Jackknife resampling
+# ジャックナイフ再標本化
 # ---------------------------------------------------------------------------
 
 def jackknife(data, func=np.mean):
-    """Jackknife resampling for error estimation.
+    """ジャックナイフ再標本化により誤差を推定する。
 
-    Parameters
-    ----------
-    data : 1-D np.ndarray
-        Array of measurements.
-    func : callable
-        Function that maps an array to a scalar (default: np.mean).
+    引数
+    ----
+    data : 1 次元 np.ndarray
+        測定値の配列。
+    func : 呼び出し可能
+        配列をスカラーに写す関数（デフォルト: np.mean）。
 
-    Returns
-    -------
-    (estimate, error) : tuple of floats
-        estimate = func(data)
-        error    = sqrt((N-1)/N * sum((func(leave-one-out_i) - mean_resampled)^2))
+    戻り値
+    ------
+    (estimate, error) : float の組
+        推定値 = func(data)
+        誤差   = sqrt((N-1)/N * sum((1 点除外推定値_i - 再標本平均)^2))
     """
     data = np.asarray(data, dtype=float)
     n = len(data)
@@ -38,7 +37,7 @@ def jackknife(data, func=np.mean):
 
     estimate = float(func(data))
 
-    # Leave-one-out resampled estimates
+    # 1 点除外した再標本ごとの推定値
     resampled = np.empty(n)
     for i in range(n):
         resampled[i] = func(np.delete(data, i))
@@ -50,29 +49,29 @@ def jackknife(data, func=np.mean):
 
 
 # ---------------------------------------------------------------------------
-# Binning analysis
+# ビニング解析
 # ---------------------------------------------------------------------------
 
 def binning_analysis(data, max_bin_size=None):
-    """Binning analysis to detect autocorrelation.
+    """自己相関を検出するためのビニング解析を行う。
 
-    Computes the standard error of the mean for geometrically increasing
-    bin sizes (1, 2, 4, 8, ...).  When the error plateaus the bin size
-    is large enough to decorrelate successive measurements.
+    ビンサイズを 1, 2, 4, 8, ... と幾何級数的に増やしながら平均値の標準誤差を
+    計算する。誤差がプラトーに達したら、そのビンサイズは連続する測定値を
+    十分に無相関化できる大きさだと考えられる。
 
-    Parameters
-    ----------
-    data : 1-D np.ndarray
-        Array of measurements.
-    max_bin_size : int, optional
-        Largest bin size to test.  Defaults to len(data) // 4 (need at
-        least 4 bins for a meaningful error estimate).
+    引数
+    ----
+    data : 1 次元 np.ndarray
+        測定値の配列。
+    max_bin_size : int, 省略可
+        試す最大のビンサイズ。デフォルトは len(data) // 4
+        （意味のある誤差推定には少なくとも 4 個のビンが必要）。
 
-    Returns
-    -------
+    戻り値
+    ------
     (bin_sizes, errors) : tuple of np.ndarrays
-        bin_sizes : array of bin sizes tested (1, 2, 4, 8, ...)
-        errors    : corresponding standard error of the mean
+        bin_sizes : 試したビンサイズの配列（1, 2, 4, 8, ...）
+        errors    : 対応する平均値の標準誤差
     """
     data = np.asarray(data, dtype=float)
     n = len(data)
@@ -88,12 +87,12 @@ def binning_analysis(data, max_bin_size=None):
 
     bs = 1
     while bs <= max_bin_size:
-        # Number of complete bins
+        # 完全なビンの個数
         n_bins = n // bs
         if n_bins < 2:
             break
 
-        # Bin the data by reshaping (drop trailing incomplete bin)
+        # データを再形成してビン平均を作る（末尾の不完全なビンは捨てる）
         binned = data[: n_bins * bs].reshape(n_bins, bs).mean(axis=1)
 
         sem = np.std(binned, ddof=1) / np.sqrt(n_bins)
@@ -106,27 +105,27 @@ def binning_analysis(data, max_bin_size=None):
 
 
 # ---------------------------------------------------------------------------
-# Autocorrelation function
+# 自己相関関数
 # ---------------------------------------------------------------------------
 
 def autocorrelation(data, max_lag=None):
-    """Compute the normalized autocorrelation function.
+    """規格化された自己相関関数を計算する。
 
     A(k) = <(x_i - <x>)(x_{i+k} - <x>)> / <(x_i - <x>)^2>
 
-    so that A(0) = 1.
+    この定義により A(0) = 1 となる。
 
-    Parameters
-    ----------
-    data : 1-D np.ndarray
-        Time series of measurements.
-    max_lag : int, optional
-        Maximum lag to compute.  Defaults to len(data) // 4.
+    引数
+    ----
+    data : 1 次元 np.ndarray
+        測定値の時系列。
+    max_lag : int, 省略可
+        計算する最大ラグ。デフォルトは len(data) // 4。
 
-    Returns
-    -------
+    戻り値
+    ------
     np.ndarray
-        Autocorrelation values for lags 0, 1, ..., max_lag.
+        ラグ 0, 1, ..., max_lag に対する自己相関値。
     """
     data = np.asarray(data, dtype=float)
     n = len(data)
@@ -142,7 +141,7 @@ def autocorrelation(data, max_lag=None):
     fluctuations = data - mean
     variance = np.dot(fluctuations, fluctuations) / n
 
-    # Guard against zero-variance data
+    # 分散が 0 のデータに対する保護
     if variance == 0.0:
         return np.ones(max_lag + 1)
 
@@ -155,28 +154,28 @@ def autocorrelation(data, max_lag=None):
 
 
 # ---------------------------------------------------------------------------
-# Integrated autocorrelation time
+# 積分自己相関時間
 # ---------------------------------------------------------------------------
 
 def integrated_autocorrelation_time(data, max_lag=None):
-    """Estimate the integrated autocorrelation time.
+    """積分自己相関時間を推定する。
 
     tau_int = 0.5 + sum_{k=1}^{max_lag} A(k)
 
-    The summation is truncated at the first lag where A(k) drops below
-    zero, since noise in the tail biases the estimate upward.
+    和は A(k) が初めて 0 未満になるラグで打ち切る。これは、裾のノイズが
+    推定値を過大評価するのを避けるためである。
 
-    Parameters
-    ----------
-    data : 1-D np.ndarray
-        Time series of measurements.
-    max_lag : int, optional
-        Passed through to :func:`autocorrelation`.
+    引数
+    ----
+    data : 1 次元 np.ndarray
+        測定値の時系列。
+    max_lag : int, 省略可
+        autocorrelation にそのまま渡される。
 
-    Returns
-    -------
+    戻り値
+    ------
     float
-        The integrated autocorrelation time.
+        積分自己相関時間。
     """
     acf = autocorrelation(data, max_lag=max_lag)
 

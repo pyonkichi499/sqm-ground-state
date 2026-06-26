@@ -16,7 +16,7 @@ from src.action import (
 )
 
 
-# ── Potentials at scalar inputs ──────────────────────────────────────────
+# ── スカラー入力に対するポテンシャル ───────────────────────────────────────
 
 class TestHarmonicPotential:
     def test_zero(self):
@@ -54,7 +54,7 @@ class TestAnharmonicPotential:
 
 class TestDoubleWellPotential:
     def test_at_minimum(self):
-        # Minima at x = +/- v, V = 0
+        # 極小点は x = +/- v で、このとき V = 0
         assert double_well_potential(1.0, lam=1.0, v=1.0) == pytest.approx(0.0)
         assert double_well_potential(-1.0, lam=1.0, v=1.0) == pytest.approx(0.0)
 
@@ -68,7 +68,7 @@ class TestDoubleWellPotential:
         np.testing.assert_allclose(double_well_potential(x), expected)
 
 
-# ── Forces at scalar inputs ──────────────────────────────────────────────
+# ── スカラー入力に対する力 ─────────────────────────────────────────────────
 
 class TestHarmonicForce:
     def test_zero(self):
@@ -105,11 +105,11 @@ class TestDoubleWellForce:
         assert double_well_force(2.0) == pytest.approx(24.0)
 
 
-# ── Force is numerical derivative of potential ───────────────────────────
+# ── 力がポテンシャルの数値微分になっていること ─────────────────────────────
 
 @pytest.mark.parametrize("x_val", [-2.0, -0.5, 0.0, 0.7, 3.0])
 class TestForceIsDerivative:
-    """Check dV/dx via centred finite differences for all three potentials."""
+    """3 種類すべてのポテンシャルについて、中心差分で dV/dx を確認する。"""
 
     eps = 1e-6
 
@@ -126,11 +126,11 @@ class TestForceIsDerivative:
         assert double_well_force(x_val) == pytest.approx(deriv, abs=1e-5)
 
 
-# ── Euclidean action ─────────────────────────────────────────────────────
+# ── ユークリッド作用 ───────────────────────────────────────────────────────
 
 class TestEuclideanAction:
     def test_constant_path_harmonic(self):
-        """Constant path: kinetic = 0, S_E = N * a * V(c)."""
+        """定数経路では 運動項 = 0, S_E = N * a * V(c) となる。"""
         N, a, c = 20, 0.1, 2.0
         x = np.full(N, c)
         expected = N * a * harmonic_potential(c)
@@ -145,10 +145,10 @@ class TestEuclideanAction:
         assert result == pytest.approx(expected)
 
     def test_two_site_kinetic(self):
-        """Two-site path: kinetic contribution from periodic differences."""
+        """2 格子点の経路で、周期的な差分から運動項を計算する。"""
         x = np.array([0.0, 1.0])
         a, mass = 0.5, 2.0
-        # dx = [1-0, 0-1] = [1, -1], kinetic = m/(2a)*sum(dx^2) = 2/1*2 = 4
+        # dx = [1-0, 0-1] = [1, -1], 運動項 = m/(2a)*sum(dx^2) = 2/1*2 = 4
         kinetic = mass / (2 * a) * (1.0 + 1.0)
         potential = a * (harmonic_potential(0.0) + harmonic_potential(1.0))
         expected = kinetic + potential
@@ -156,16 +156,16 @@ class TestEuclideanAction:
         assert result == pytest.approx(expected)
 
     def test_zero_path(self):
-        """All-zero path gives zero action for harmonic potential."""
+        """全ゼロ経路では、調和振動子ポテンシャルに対する作用は 0 になる。"""
         x = np.zeros(50)
         assert euclidean_action(x, harmonic_potential, a=0.1) == pytest.approx(0.0)
 
 
-# ── Drift force ──────────────────────────────────────────────────────────
+# ── ドリフト力 ─────────────────────────────────────────────────────────────
 
 class TestDriftForce:
     def test_constant_path_harmonic(self):
-        """Constant path: laplacian = 0, drift = -a * V'(c) for every site."""
+        """定数経路では ラプラシアン = 0 なので、各格子点で ドリフト力 = -a * V'(c) となる。"""
         N, a, c = 16, 0.1, 2.0
         x = np.full(N, c)
         expected = -a * harmonic_force(c) * np.ones(N)
@@ -180,29 +180,29 @@ class TestDriftForce:
         np.testing.assert_allclose(result, expected)
 
     def test_zero_path(self):
-        """Zero path gives zero drift for harmonic potential."""
+        """ゼロ経路では、調和振動子ポテンシャルに対するドリフト力は 0 になる。"""
         x = np.zeros(10)
         result = drift_force(x, harmonic_force, a=0.1)
         np.testing.assert_allclose(result, np.zeros(10))
 
 
-# ── Periodic boundary conditions ─────────────────────────────────────────
+# ── 周期境界条件 ───────────────────────────────────────────────────────────
 
 class TestPeriodicBC:
     def test_drift_force_3site(self):
-        """Verify periodic BC on a small 3-site path [1, 2, 4]."""
+        """小さな 3 格子点経路 [1, 2, 4] で周期境界条件を確認する。"""
         x = np.array([1.0, 2.0, 4.0])
         mass, a = 1.0, 0.1
 
-        # Site 0: neighbours are x[1]=2 and x[2]=4 (periodic)
+        # 格子点 0: 隣接点は x[1]=2 と x[2]=4（周期境界）
         lap_0 = 2.0 + 4.0 - 2.0 * 1.0   # 4
         f_0 = (mass / a) * lap_0 - a * harmonic_force(1.0)
 
-        # Site 1: neighbours are x[2]=4 and x[0]=1
+        # 格子点 1: 隣接点は x[2]=4 と x[0]=1
         lap_1 = 4.0 + 1.0 - 2.0 * 2.0   # 1
         f_1 = (mass / a) * lap_1 - a * harmonic_force(2.0)
 
-        # Site 2: neighbours are x[0]=1 and x[1]=2 (periodic)
+        # 格子点 2: 隣接点は x[0]=1 と x[1]=2（周期境界）
         lap_2 = 1.0 + 2.0 - 2.0 * 4.0   # -5
         f_2 = (mass / a) * lap_2 - a * harmonic_force(4.0)
 
@@ -211,10 +211,10 @@ class TestPeriodicBC:
         np.testing.assert_allclose(result, expected)
 
     def test_action_periodic_wrap(self):
-        """Action kinetic term wraps x[N-1] -> x[0]."""
+        """作用の運動項では x[N-1] -> x[0] の折り返しを含める。"""
         x = np.array([0.0, 0.0, 3.0])
         a, mass = 1.0, 1.0
-        # dx = [0-0, 3-0, 0-3] = [0, 3, -3], kinetic = 0.5*(0+9+9) = 9
+        # dx = [0-0, 3-0, 0-3] = [0, 3, -3], 運動項 = 0.5*(0+9+9) = 9
         kinetic = mass / (2.0 * a) * (0.0 + 9.0 + 9.0)
         potential = a * np.sum(harmonic_potential(x))
         expected = kinetic + potential
