@@ -16,6 +16,18 @@
   - 相関関数、有効質量、波動関数ヒストグラムの意味
 - [要件定義](REQUIREMENTS.md)
 
+## 構成
+
+コードは役割ごとに次の層に分かれている。
+
+- ドメイン: `src/potentials.py`（ポテンシャル V・V'・解析的に分かる量の単一の源）
+- 数値カーネル: `src/lattice.py`、`src/langevin.py`、`src/exact.py`、`src/observables.py`、`src/analysis.py`
+- オーケストレーション: `src/experiment.py`（解析解・有限差分・Parisi-Wu の 3 者比較を実行）と `src/runner.py`（出力保存）
+- 実行例: `examples/` 以下の各スクリプトは設定を渡して `run_experiment` を呼ぶだけ
+
+`src/action.py` と `src/analytic.py` は従来の関数 API を保つ後方互換レイヤーで、
+内部的には `src/potentials.py` と `src/lattice.py` に委譲する。
+
 ## 実行例で得られる出力
 
 `examples/harmonic.py` は調和振動子を、`examples/anharmonic.py` は非調和振動子を、`examples/double_well.py` は二重井戸ポテンシャルを計算し、結果を `outputs/` 以下に保存する。

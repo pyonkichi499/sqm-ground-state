@@ -103,7 +103,8 @@ $$
 
 である。
 
-コード上では `src/action.py` の `euclidean_action` がこの量を計算している。
+コード上では `src/lattice.py` の `euclidean_action` がこの量を計算している
+（従来どおり `src/action.py` 経由でも呼び出せる）。
 
 ---
 

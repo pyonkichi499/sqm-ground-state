@@ -68,14 +68,19 @@ sqm-ground-state/
 ├── src/
 │   ├── __init__.py
 │   ├── langevin.py       # ランジュバン方程式ソルバー
-│   ├── action.py         # ユークリッド作用とポテンシャル定義
-│   ├── analytic.py       # 解析解・解析的に分かる量
-│   ├── observables.py    # 物理量の測定
-│   ├── analysis.py       # 統計解析（誤差推定など）
+│   ├── potentials.py     # ポテンシャル定義（V, V', 解析量）の単一の源
+│   ├── lattice.py        # ユークリッド作用・ドリフト力の数値カーネル
+│   ├── action.py         # 後方互換レイヤー（potentials/lattice へ委譲）
+│   ├── analytic.py       # 後方互換レイヤー（potentials へ委譲）
 │   ├── exact.py          # 有限差分対角化による検証
-│   └── runner.py         # example 用の出力・summary 保存ヘルパー
+│   ├── experiment.py     # 3 者比較の実行オーケストレーション
+│   ├── runner.py         # 出力・summary 保存ヘルパー
+│   ├── observables.py    # 物理量の測定
+│   └── analysis.py       # 統計解析（誤差推定など）
 ├── tests/
 │   ├── test_action.py
+│   ├── test_potentials.py
+│   ├── test_experiment.py
 │   ├── test_analytic.py
 │   ├── test_analysis.py
 │   ├── test_exact.py
