@@ -18,7 +18,7 @@
 
 ## 実行例で得られる出力
 
-`examples/harmonic.py` は調和振動子を計算し、結果を `outputs/` 以下に保存する。
+`examples/harmonic.py` は調和振動子を、`examples/anharmonic.py` は非調和振動子を計算し、結果を `outputs/` 以下に保存する。
 出力先はパラメータごとに分かれるため、複数の設定を試しても結果が混ざらない。
 
 代表的な出力は次の通り。
@@ -26,3 +26,10 @@
 - `effective_mass.png`: ユークリッド相関関数から求めた有効質量
 - `wavefunction.png`: 基底状態波動関数の確率密度の近似
 - `summary.json`: 実行パラメータと主要な数値結果
+
+実行例:
+
+```bash
+python examples/harmonic.py
+python examples/anharmonic.py
+```
