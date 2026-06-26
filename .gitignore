@@ -4,3 +4,6 @@ __pycache__/
 
 # example や実験スクリプトが生成する出力
 outputs/
+.venv/
+.coverage
+htmlcov/

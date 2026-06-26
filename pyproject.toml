@@ -1,0 +1,26 @@
+[project]
+name = "sqm-ground-state"
+version = "0.1.0"
+description = "Numerically compute quantum-mechanical ground states via stochastic quantization."
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "matplotlib",
+    "numpy",
+    "seaborn",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-cov",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["src"]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+fail_under = 80
