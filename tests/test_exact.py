@@ -6,8 +6,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 import numpy as np
 import pytest
 
-from src.action import harmonic_potential
-from src.exact import (
+from sqm_ground_state.action import harmonic_potential
+from sqm_ground_state.exact import (
     finite_difference_hamiltonian,
     ground_state_energy,
     solve_spectrum,

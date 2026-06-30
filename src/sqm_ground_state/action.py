@@ -3,16 +3,16 @@
 
 設計の単一の真実の源は次の 2 つに移った。
 
-- ``src.potentials`` : ポテンシャル V(x)・導関数 V'(x)・解析的に分かる量
-- ``src.lattice``    : ユークリッド作用とドリフト力の数値カーネル
+- ``sqm_ground_state.potentials`` : ポテンシャル V(x)・導関数 V'(x)・解析的に分かる量
+- ``sqm_ground_state.lattice``    : ユークリッド作用とドリフト力の数値カーネル
 
 このモジュールは、従来からの関数ベースの API（``harmonic_potential`` など）を
 維持し、既存の呼び出し側やテストを壊さないために残している。新しいコードでは
-``src.potentials.Potential`` オブジェクトを直接使うことを推奨する。
+``sqm_ground_state.potentials.Potential`` オブジェクトを直接使うことを推奨する。
 """
 
-from src.lattice import drift_force, euclidean_action  # noqa: F401  （後方互換の再エクスポート）
-from src.potentials import (
+from sqm_ground_state.lattice import drift_force, euclidean_action  # noqa: F401  （後方互換の再エクスポート）
+from sqm_ground_state.potentials import (
     AnharmonicPotential,
     DoubleWellPotential,
     HarmonicPotential,

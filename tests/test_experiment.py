@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 import numpy as np
 import pytest
 
-from src.experiment import (
+from sqm_ground_state.experiment import (
     PLOT_FONT_FAMILY,
     ExperimentConfig,
     PlotFontNotFoundError,
@@ -16,7 +16,7 @@ from src.experiment import (
     _resolve_plot_font,
     run_experiment,
 )
-from src.potentials import double_well, harmonic
+from sqm_ground_state.potentials import double_well, harmonic
 
 
 def _fast_config(potential, base_dir, **overrides):
@@ -114,7 +114,7 @@ def test_plot_font_family_is_noto_sans_cjk_jp():
 
 def test_resolve_plot_font_registers_system_font_when_needed():
     """OS に fonts-noto-cjk がある場合、matplotlib 未登録でも解決できる。"""
-    import src.experiment as experiment
+    import sqm_ground_state.experiment as experiment
 
     experiment._resolved_plot_font = None
     resolved = _resolve_plot_font()
@@ -123,7 +123,7 @@ def test_resolve_plot_font_registers_system_font_when_needed():
 
 def test_resolve_plot_font_raises_when_missing(monkeypatch):
     """日本語フォントが無い環境では PlotFontNotFoundError を出す。"""
-    import src.experiment as experiment
+    import sqm_ground_state.experiment as experiment
 
     monkeypatch.setattr(experiment, "_lookup_plot_font", lambda _fm: None)
     monkeypatch.setattr(experiment, "_register_plot_font_from_system", lambda _fm: None)
@@ -136,7 +136,7 @@ def test_configure_plot_fonts_sets_single_resolved_font(monkeypatch):
     """rcParams には解決済みフォント名を 1 つだけ設定する。"""
     import matplotlib.pyplot as plt
 
-    import src.experiment as experiment
+    import sqm_ground_state.experiment as experiment
 
     monkeypatch.setattr(experiment, "_resolved_plot_font", "Noto Sans CJK JP")
 
@@ -154,7 +154,7 @@ def test_configure_plot_style_uses_whitegrid():
     """seaborn が利用できる環境では whitegrid スタイルを使う。"""
     import matplotlib.pyplot as plt
 
-    import src.experiment as experiment
+    import sqm_ground_state.experiment as experiment
 
     monkeypatch = pytest.MonkeyPatch()
     monkeypatch.setattr(experiment, "_resolved_plot_font", "Noto Sans CJK JP")

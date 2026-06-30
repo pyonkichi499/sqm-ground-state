@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 import numpy as np
 import pytest
 
-from src.analytic import (
+from sqm_ground_state.analytic import (
     anharmonic_analytic_results,
     double_well_analytic_results,
     harmonic_analytic_results,

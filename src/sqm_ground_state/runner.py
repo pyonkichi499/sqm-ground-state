@@ -41,7 +41,7 @@ def make_run_name(system_name, params):
 
 def repo_root():
     """このリポジトリのルートディレクトリの絶対パスを返す。"""
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
 def make_output_dir(system_name, params, base_dir=None):

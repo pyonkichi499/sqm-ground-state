@@ -1,4 +1,4 @@
-"""src/langevin.py の LangevinSimulation クラスに対するテスト。"""
+"""src/sqm_ground_state/langevin.py の LangevinSimulation クラスに対するテスト。"""
 
 import os
 import sys
@@ -7,8 +7,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 import numpy as np
 import pytest
 
-from src.langevin import LangevinSimulation
-from src.action import harmonic_force
+from sqm_ground_state.langevin import LangevinSimulation
+from sqm_ground_state.action import harmonic_force
 
 
 # -- 共通ヘルパー ------------------------------------------------------------

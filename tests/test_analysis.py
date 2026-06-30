@@ -3,7 +3,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import numpy as np
 import pytest
-from src.analysis import (
+from sqm_ground_state.analysis import (
     jackknife,
     binning_analysis,
     autocorrelation,

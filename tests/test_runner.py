@@ -6,10 +6,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import numpy as np
 
-from src.runner import (
+from sqm_ground_state.runner import (
     format_param_value,
     make_output_dir,
     make_run_name,
+    repo_root,
     save_summary,
     to_builtin,
 )
@@ -41,6 +42,15 @@ def test_make_output_dir_creates_directory(tmp_path):
 
     assert os.path.isdir(output_dir)
     assert output_dir.endswith("harmonic/harmonic_omega_1_N_16")
+
+
+def test_repo_root_points_to_project_root():
+    """src layout でも repo_root は src/ ではなくリポジトリルートを返す。"""
+    root = repo_root()
+
+    assert os.path.exists(os.path.join(root, "README.md"))
+    assert os.path.exists(os.path.join(root, "pyproject.toml"))
+    assert os.path.basename(root) == "sqm-ground-state"
 
 
 def test_to_builtin_numpy_values():

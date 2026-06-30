@@ -17,12 +17,12 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from src.analysis import jackknife
-from src.exact import solve_spectrum
-from src.langevin import LangevinSimulation
-from src.observables import correlator, effective_mass, position_histogram
-from src.potentials import Potential
-from src.runner import make_output_dir, save_summary
+from sqm_ground_state.analysis import jackknife
+from sqm_ground_state.exact import solve_spectrum
+from sqm_ground_state.langevin import LangevinSimulation
+from sqm_ground_state.observables import correlator, effective_mass, position_histogram
+from sqm_ground_state.potentials import Potential
+from sqm_ground_state.runner import make_output_dir, save_summary
 
 
 @dataclass
@@ -79,7 +79,7 @@ class ExperimentConfig:
     def __post_init__(self):
         """設定値の明らかな誤りを早い段階で検出する。"""
         if not isinstance(self.potential, Potential):
-            raise TypeError("potential は src.potentials.Potential のインスタンスである必要がある")
+            raise TypeError("potential は sqm_ground_state.potentials.Potential のインスタンスである必要がある")
         if self.mass <= 0:
             raise ValueError("mass は正である必要がある")
         if self.n_lattice < 2:

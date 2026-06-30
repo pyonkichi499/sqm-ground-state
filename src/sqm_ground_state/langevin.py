@@ -11,7 +11,7 @@
 
 import numpy as np
 
-from src.lattice import drift_force
+from sqm_ground_state.lattice import drift_force
 
 
 class LangevinSimulation:

@@ -8,7 +8,7 @@
 2. 非 Parisi-Wu の数値計算（有限差分対角化）
 3. Parisi-Wu 確率過程量子化
 
-共通の実行フローは src.experiment.run_experiment にまとまっているため、
+共通の実行フローは sqm_ground_state.experiment.run_experiment にまとまっているため、
 この example はパラメータを設定して呼び出すだけである。
 
 使い方:
@@ -18,10 +18,10 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from src.experiment import ExperimentConfig, run_experiment
-from src.potentials import harmonic
+from sqm_ground_state.experiment import ExperimentConfig, run_experiment
+from sqm_ground_state.potentials import harmonic
 
 
 def main():

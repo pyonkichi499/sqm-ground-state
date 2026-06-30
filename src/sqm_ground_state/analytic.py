@@ -1,7 +1,7 @@
 """
 解析的に分かる量への後方互換レイヤー。
 
-設計の単一の真実の源は ``src.potentials`` の各 Potential クラスの
+設計の単一の真実の源は ``sqm_ground_state.potentials`` の各 Potential クラスの
 ``analytic(mass)`` メソッドに移った。このモジュールは従来の関数ベース API を
 維持するための薄いラッパーである。新しいコードでは Potential オブジェクトの
 ``analytic`` を直接使うことを推奨する。
@@ -9,7 +9,7 @@
 
 import numpy as np
 
-from src.potentials import (
+from sqm_ground_state.potentials import (
     AnharmonicPotential,
     DoubleWellPotential,
     HarmonicPotential,

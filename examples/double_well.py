@@ -13,10 +13,10 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from src.experiment import ExperimentConfig, run_experiment
-from src.potentials import double_well
+from sqm_ground_state.experiment import ExperimentConfig, run_experiment
+from sqm_ground_state.potentials import double_well
 
 
 def main():

@@ -4,7 +4,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import numpy as np
 import pytest
-from src.observables import correlator, effective_mass, position_histogram, mean_x_squared
+from sqm_ground_state.observables import correlator, effective_mass, position_histogram, mean_x_squared
 
 
 # ---------- 相関関数 ----------
