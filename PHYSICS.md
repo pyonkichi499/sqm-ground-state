@@ -103,8 +103,8 @@ $$
 
 である。
 
-コード上では `src/lattice.py` の `euclidean_action` がこの量を計算している
-（従来どおり `src/action.py` 経由でも呼び出せる）。
+コード上では `src/sqm_ground_state/lattice.py` の `euclidean_action` がこの量を計算している
+（従来どおり `src/sqm_ground_state/action.py` 経由でも呼び出せる）。
 
 ---
 
@@ -174,7 +174,7 @@ $$
 
 である。
 
-コード上では `src/langevin.py` の `LangevinSimulation.step()` がこの更新を行っている。
+コード上では `src/sqm_ground_state/langevin.py` の `LangevinSimulation.step()` がこの更新を行っている。
 
 ---
 
